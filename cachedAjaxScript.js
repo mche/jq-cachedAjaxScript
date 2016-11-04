@@ -1,18 +1,26 @@
 (function ($) {
   /*
-  @param callback, which execute when all scripts done loaded
-  @param options is a ajax options, see  jQuery.ajax( options )
+  @param callback, which execute when all scripts done loaded (param optional)
+  @param options is a ajax options, see  jQuery.ajax( options ) (param optional)
     by default cache: true, dataType: "script",
   
   DOM:
   
-  <a id="btnSave" data-form="formFoo" class="btn-floating btn-large" cachedAjaxScript="/js/profile.js"><i class="material-icons">save</i></a>
+  <a ... cachedAjaxScript="/js/profile.js" cachedAjaxScriptDone="elem.pluginFoo(methodOrOptions, ...);",>Push...</a>
   <script cachedAjaxScript="/js/foo.js"></script>
   <div cachedAjaxScript="/js/bar.js"></div>
   
+  
+  DOM atributes for elements:
+  cachedAjaxScript="/js/scriptFoo.js" (i.e. url) (atribute required)
+  cachedAjaxScriptDone="code string evalutes on this script loaded success".
+      Enabled variable 'elem' is pointer to jQuery DOM element (atribute optional)
+  
+  Note. The callback param exec only if ALL scripts loaded successfully.
+  
   Usage:
   $('*[cachedAjaxScript]').cachedAjaxScript(function () {
-    // extended functionality here!!
+    // extended functionality ready!!
     $('#btnSave').profile('btnSaveProfile');
   });
   
@@ -25,11 +33,19 @@
         options.done++;
         elem.removeAttr('cachedAjaxScript');
         elem.attr('done-cachedAjaxScript', url);
+        var evalCode = elem.attr('cachedAjaxScriptDone');
+        if (typeof evalCode == 'string' && evalCode.length) {
+          eval(evalCode);
+        }
       }
+      //~ else {
+        //~ console.log(url + '  loading error: ' + jqxhr.status + ' ' + textStatus);
+      //~ }
       if (options.done == options.total) {
-        options.callback();
+        if (typeof options.callback === 'function' ) {
+          options.callback();
+        }
       }
-      
     };
   };
   
@@ -52,7 +68,9 @@
     $(this).each(function(){
       var $this = $(this);
       options.url = $this.attr('cachedAjaxScript');
-      jQuery.ajax( options ).done(ajaxDone($this, options.url, counter));
+      if (typeof options.url == 'string' && options.url.length) {
+        jQuery.ajax( options ).done(ajaxDone($this, options.url, counter));
+      }
     });
   };
 }( jQuery ));
